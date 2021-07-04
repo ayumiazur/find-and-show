@@ -1,0 +1,27 @@
+{
+  "id" : "ef859283",
+  "name" : "Find and Show",
+  "version" : "0.0.1",
+  "host" : {
+    "app" : "XD",
+    "minVersion" : "21.0"
+  },
+    "description": "This plugin allows to search for text object in a document.\\nSelect any item from the search results will move the screen to the object.",
+    "summary": "Find and show.",
+    "languages": ["en"],
+    "author": "Ayumi Banno",
+    "helpUrl": "mailto:ayumi.azur+git@gmail.com",
+    "icons": [
+        { "width": 48, "height": 48, "path": "images/icon_48.png" },
+        { "width": 96, "height": 96, "path": "images/icon_96.png" },
+        { "width": 144, "height": 144, "path":"images/icon_144.png"},
+        { "width": 192, "height": 192, "path": "images/icon_192.png"}
+    ],
+  "uiEntryPoints": [
+    {
+      "type": "panel",
+      "label": "Search",
+      "panelId": "search"
+    }
+    ]
+}
