@@ -20,7 +20,7 @@
   "uiEntryPoints": [
     {
       "type": "panel",
-      "label": "Search",
+      "label": "Find and Show",
       "panelId": "search"
     }
     ]
