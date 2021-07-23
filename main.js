@@ -4,7 +4,8 @@ Find and Show - Adobe XD Plugin
 
 ------------------------------------------------------------
 
-Ver 0.0.1
+Ver 0.0.2 - 1st Release
+Ver 0.0.3 - 2nd Release
 
 ========================================================= */
 
@@ -64,8 +65,9 @@ function create(selection) {
               padding: 10px 20px 10px 10px;
               border-bottom: 1px solid #ddd;
               background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJpY29ubW9uc3RyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIKCSB3aWR0aD0iMjRweCIgaGVpZ2h0PSIyNHB4IiB2aWV3Qm94PSIwIDAgMjQgMjQiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDI0IDI0OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6I0NDQ0NDQzt9Cjwvc3R5bGU+Cjxwb2x5Z29uIGlkPSJhcnJvdy0yNSIgY2xhc3M9InN0MCIgcG9pbnRzPSI1LDMgOC4wNTcsMCAyMCwxMiA4LjA1NywyNCA1LDIxIDE0LDEyICIvPgo8L3N2Zz4K');
-              background-size: 6%;
+              background-size: 10px;
               background-position: right 5px center;
+              backgtound-repeat: no-repeat;
             }
             .artboard {
               display: block;
@@ -109,7 +111,7 @@ function create(selection) {
             }
         </style>
         <form method="dialog" id="main">
-            <div class="">
+            <div>
                 <label class="row">
                     <input type="text" uxp-quiet="true" id="txtV" value="" placeholder="Search Text..." />
                 </label>
@@ -119,7 +121,6 @@ function create(selection) {
             </footer>
         </form>
         <div id="result"></div>
-        <p id="warning">This plugin requires you to select a text in the document. Please select a text.</p>
         `
 
   function searchText(e) {
@@ -282,7 +283,7 @@ function create(selection) {
       let y = e.currentTarget.getAttribute('data-y');
       let w = e.currentTarget.getAttribute('data-w');
       let h = e.currentTarget.getAttribute('data-h');
-      viewport.scrollToCenter(Number(x), Number(y)); //現在の画面拡大率の状態で画面の真ん中にフォーカス
+      viewport.scrollToCenter(Number(x), Number(y));
     })
 
   }
@@ -298,14 +299,19 @@ function show(event) {
   if (!panel) event.node.appendChild(create());
 }
 
+function hide(event) {
+  let aNode = document.getElementById("result");
+  for (let i = aNode.childNodes.length - 1; i >= 0; i--) {
+    aNode.removeChild(aNode.childNodes[i]);
+  }
+}
+
 function update(selection) {
   const isSelection = selection.items.length;
   let form = document.querySelector("form");
-  let warning = document.querySelector("#warning");
   let result = document.querySelector("#result");
 
   form.className = "show";
-  warning.className = "hide";
 
   if ((isSelection >= 2) || !(isSelection)) {
     document.querySelector("#txtV").value = '';
@@ -325,8 +331,9 @@ async function showError() {
 
 module.exports = {
   panels: {
-      search: {
+    search: {
       show,
+      hide,
       update,
       showError
     }
