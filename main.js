@@ -6,6 +6,7 @@ Find and Show - Adobe XD Plugin
 
 Ver 0.0.2 - 1st Release
 Ver 0.0.3 - 2nd Release
+Ver 0.0.4 - 3rd Release
 
 ========================================================= */
 
@@ -43,13 +44,18 @@ function create(selection) {
             input[type=checkbox] {
               margin-right: 6px;
             }
-            .Keyword {
+            .keyword {
               display: block;
               margin: 5px 0;
               padding: 3px;
               font-size: 15px;
               font-weight: bold;
               background: #ededed;
+            }
+            .keyword--s {
+              font-size: 12px;
+              padding: 5px;
+              font-weight: normal;
             }
             .resultNum {
               display: block;
@@ -102,6 +108,9 @@ function create(selection) {
             a:hover {
               background-color: #fff;
             }
+            #op1, #op2 {
+              margin-left: 20px;
+            }
             .show {
                 display: block;
                 width: auto;
@@ -113,8 +122,21 @@ function create(selection) {
         <form method="dialog" id="main">
             <div>
                 <label class="row">
-                    <input type="text" uxp-quiet="true" id="txtV" value="" placeholder="Search Text..." />
+                    <input type="text" uxp-quiet="true" id="txtV" value="" placeholder="Search Keyword..." />
                 </label>
+                <label class="chk">
+                  <input type="checkbox" id="regexp">Regular Expression
+                </label>
+                <label class="chk">
+                  <input type="checkbox" id="op1">Global Match
+                </label>
+                <label class="chk">
+                  <input type="checkbox" id="op2">Ignore Case
+                </label>
+                <!--<label class="row">
+                    <span>↔︎</span>
+                    <input type="number" uxp-quiet="true" id="txtH" value="" placeholder="Width" />
+                </label>-->
             </div>
             <footer>
               <button id="ok" type="submit" uxp-variant="cta">Search</button>
@@ -124,20 +146,14 @@ function create(selection) {
         `
 
   function searchText(e) {
-
     const sTxtValue = document.querySelector("#txtV").value;
 
-    if ((sTxtValue == '') || (sTxtValue == undefined)) {
-
+    const regChk = document.querySelector("#regexp").checked;
+    const op1Chk = document.querySelector("#op1").checked;
+    const op2Chk = document.querySelector("#op2").checked;
+    if ((sTxtValue == '') || (sTxtValue == undefined) || (sTxtValue.length < 1)) {
       showError();
-
-    } else if (sTxtValue.length < 2) {
-
-      showError();
-
-    } else if (sTxtValue && (sTxtValue.length > 1)) {
-
-      document.querySelector("#txtV").value = sTxtValue;
+    } else {
       document.getElementById("result").className = "show";
 
       let aNode = document.getElementById("result");
@@ -145,114 +161,22 @@ function create(selection) {
         aNode.removeChild(aNode.childNodes[i]);
       }
 
-      const { editDocument } = require("application");
-      const viewport = require("viewport");
-
       let resultTitle = document.createElement('h1');
       document.getElementById("result").appendChild(resultTitle);
-
-      const regexp = new RegExp(sTxtValue, 'gi');
 
       let ul = document.createElement('ul');
       document.getElementById("result").appendChild(ul);
 
       let artboard = root.children;
       for (let i = 0; i < artboard.length; i++) {
-
         let abObj = artboard.at(i).children;
         for (let j = 0; j < abObj.length; j++) {
-
           if (abObj.at(j) instanceof Text) {
-
-            _regexp(artboard.at(i), abObj.at(j));
-
+            _chk_RegExp(artboard.at(i), abObj.at(j));
           } else if ((abObj.at(j) instanceof SymbolInstance) || (abObj.at(j) instanceof Group)) {
-
             grpToText(artboard.at(i), abObj.at(j).children);
-
           }
-
         }
-      }
-
-      function grpToText(artboard, group) {
-
-        for (let i = 0; i < group.length; i++) {
-
-          if (group.at(i) instanceof Text) {
-
-            _regexp(artboard, group.at(i), group.at(i).parent)
-
-          } else if ((group.at(i) instanceof SymbolInstance) || (group.at(i) instanceof Group)) {
-
-            for (let j = 0; j < group.at(i).children.length; j++) {
-              if (group.at(i).children.at(j) instanceof Text) {
-
-                _regexp(artboard, group.at(i).children.at(j), group.at(i).children.at(j).parent)
-
-              }
-
-            }
-
-          }
-
-        }
-      }
-
-
-
-      function _regexp(artboard, obj, parent) {
-
-        if (obj.text.toLowerCase().indexOf(sTxtValue.toLowerCase()) !== -1) {
-          let x = obj.globalBounds.x;
-          let y = obj.globalBounds.y;
-          let w = obj.globalBounds.width;
-          let h = obj.globalBounds.height;
-
-          let li = document.createElement('li');
-          ul.appendChild(li);
-
-          let objKind;
-          if (parent) {
-            if (parent instanceof SymbolInstance) {
-              objKind = '<span class="obj obj--symbol">Component</span>';
-            } else if (parent instanceof Group) {
-              objKind = '<span class="obj obj--group">Group</span>';
-            }
-          }
-
-          if (obj.text.toUpperCase() == sTxtValue.toUpperCase()) {
-
-            if (parent) {
-              li.innerHTML = list(x, y, w, h, artboard.name, obj.text, objKind);
-            } else {
-              li.innerHTML = list(x, y, w, h, artboard.name, obj.text);
-            }
-
-          } else {
-
-            let replaceTxt = obj.text.replace(new RegExp(sTxtValue, 'gi'), (match) => `<span class="highlight">${match}</span>`);
-
-            if (parent) {
-              li.innerHTML = list(x, y, w, h, artboard.name, replaceTxt, objKind);
-            } else {
-              li.innerHTML = list(x, y, w, h, artboard.name, replaceTxt);
-            }
-
-          }
-
-        }
-
-      }
-
-      function list(x, y, w, h, artboard, text, label) {
-        let output;
-        if (label) {
-          output = '<a class="link" data-x="' + x + '" data-y="' + y + '" data-w="' + w + '" data-h="' + h + '"><span class="artboard">' + artboard + '</span>' + label + '<span class="text">' + text + '</span></a>';
-        } else {
-          output = '<a class="link" data-x="' + x + '" data-y="' + y + '" data-w="' + w + '" data-h="' + h + '"><span class="artboard">' + artboard + '</span><span class="text">' + text + '</span></a>';
-        }
-        return output;
       }
 
       let link = document.getElementsByClassName("link");
@@ -260,12 +184,93 @@ function create(selection) {
         link[i].addEventListener('click', onSelect);
       }
 
-      resultTitle.innerHTML = 'Search Keyword: <span class="Keyword">' + sTxtValue + '</span>';
-
+      resultTitle.innerHTML = 'Search Keyword: <span class="keyword">' + sTxtValue + '</span>';
       if (link.length == 0) {
         resultTitle.innerHTML += '<span class="noResult">No results found</span>';
       } else {
         resultTitle.innerHTML += '<span class="resultNum">' + link.length + ' results</span>';
+      }
+
+
+      /* ==================================================
+
+      Function
+
+      ================================================== */
+
+      function grpToText(artboard, group) {
+        for (let i = 0; i < group.length; i++) {
+          if (group.at(i) instanceof Text) {
+            _chk_RegExp(artboard, group.at(i), group.at(i).parent)
+          } else if ((group.at(i) instanceof SymbolInstance) || (group.at(i) instanceof Group)) {
+            for (let j = 0; j < group.at(i).children.length; j++) {
+              if (group.at(i).children.at(j) instanceof Text) {
+                _chk_RegExp(artboard, group.at(i).children.at(j), group.at(i).children.at(j).parent)
+              }
+            }
+          }
+        }
+      }
+
+      function _chk_RegExp(artboard, obj, parent) {
+        const gflags = op1Chk ? 'g' : '';
+        const iflags = op2Chk ? 'i' : '';
+        if (!regChk) {
+          if (obj.text.toLowerCase().indexOf(sTxtValue.toLowerCase()) !== -1) {
+            _search(artboard, obj, parent);
+          }
+        } else {
+          const regexp = new RegExp(sTxtValue, gflags + iflags);
+          if (regexp.test(obj.text)) {
+            _search(artboard, obj, parent);
+          }
+        }
+      }
+
+      function _search(artboard, obj, parent) {
+        let x = obj.globalBounds.x;
+        let y = obj.globalBounds.y;
+        let localX = obj.boundsInParent.x;
+        let localY = obj.boundsInParent.y;
+        let w = obj.globalBounds.width;
+        let h = obj.globalBounds.height;
+
+        let li = document.createElement('li');
+        ul.appendChild(li);
+
+        let objKind;
+        if (parent) {
+          if (parent instanceof SymbolInstance) {
+            objKind = '<span class="obj obj--symbol">Component</span>';
+          } else if (parent instanceof Group) {
+            objKind = '<span class="obj obj--group">Group</span>';
+          }
+        }
+
+        if (obj.text.toUpperCase() == sTxtValue.toUpperCase()) {
+          if (parent) {
+            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, obj.text, objKind);
+          } else {
+            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, obj.text);
+          }
+        } else {
+          let replaceTxt = obj.text.replace(new RegExp(sTxtValue, 'gi'), (match) => `<span class="highlight">${match}</span>`);
+          if (parent) {
+            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, replaceTxt, objKind);
+          } else {
+            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, replaceTxt);
+          }
+        }
+      }
+
+      function list(x, y, lx, ly, w, h, artboard, text, label) {
+        let output;
+        if (label) {
+          output = '<a class="link" data-x="' + x + '" data-lx="' + lx + '" data-y="' + y + '" data-ly="' + ly + '" data-w="' + w + '" data-h="' + h + '"><span class="artboard">' + artboard + '</span>' + label + '<span class="text">' + text + '</span></a>';
+        } else {
+          output = '<a class="link" data-x="' + x + '" data-lx="' + lx + '" data-y="' + y + '" data-ly="' + ly + '" data-w="' + w + '" data-h="' + h + '"><span class="artboard">' + artboard + '</span><span class="text">' + text + '</span></a>';
+        }
+        return output;
       }
 
     }
@@ -274,18 +279,18 @@ function create(selection) {
 
 
   function onSelect(e) {
-
     const { editDocument } = require("application");
     const viewport = require("viewport");
 
     editDocument(selection => {
       let x = e.currentTarget.getAttribute('data-x');
       let y = e.currentTarget.getAttribute('data-y');
+      let lx = e.currentTarget.getAttribute('data-lx');
+      let ly = e.currentTarget.getAttribute('data-ly');
       let w = e.currentTarget.getAttribute('data-w');
       let h = e.currentTarget.getAttribute('data-h');
       viewport.scrollToCenter(Number(x), Number(y));
     })
-
   }
 
   panel = document.createElement("div");
@@ -295,39 +300,64 @@ function create(selection) {
   return panel;
 }
 
+
 function show(event) {
   if (!panel) event.node.appendChild(create());
+
+  const regChkbox = document.querySelector("#regexp");
+  const op1Chkbox = document.querySelector("#op1");
+  const op2Chkbox = document.querySelector("#op2");
+  regChkbox.checked = false;
+  op1Chkbox.disabled = true;
+  op2Chkbox.disabled = true;
+
+  regChkbox.addEventListener("change", function(e) {
+    if (regChkbox.checked) {
+      op1Chkbox.disabled = false;
+      op2Chkbox.disabled = false;
+    } else {
+      op1Chkbox.disabled = true;
+      op2Chkbox.disabled = true;
+    }
+  });
 }
+
 
 function hide(event) {
   let aNode = document.getElementById("result");
   for (let i = aNode.childNodes.length - 1; i >= 0; i--) {
     aNode.removeChild(aNode.childNodes[i]);
   }
+
+  document.querySelector("#regexp").checked = false;
+  document.querySelector("#op1").checked = false;
+  document.querySelector("#op2").checked = false;
 }
+
 
 function update(selection) {
   const isSelection = selection.items.length;
+
   let form = document.querySelector("form");
   let result = document.querySelector("#result");
 
   form.className = "show";
-
-  if ((isSelection >= 2) || !(isSelection)) {
-    document.querySelector("#txtV").value = '';
-  } else if (isSelection == 1) {
+  if (isSelection) {
     document.querySelector("#txtV").value = selection.items[0].text;
   }
-
 }
+
+
+
 
 async function showError() {
   await error('Error!',
     'This plugin requires you to input search text.',
     'Please check:',
     '* Try again input text.',
-    '* Please input 2 or more characters.');
+    '* Please input 1 or more characters.');
 }
+
 
 module.exports = {
   panels: {
