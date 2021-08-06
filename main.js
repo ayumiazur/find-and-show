@@ -6,7 +6,7 @@ Find and Show - Adobe XD Plugin
 
 Ver 0.0.2 - 1st Release
 Ver 0.0.3 - 2nd Release
-Ver 0.0.5 - 3rd Release
+Ver 0.0.4 - 3rd Release
 
 ========================================================= */
 
