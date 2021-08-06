@@ -1,4 +1,4 @@
-# Find and Show - Adobe XD Plugin
+# Find and Show plugin for Adobe XD
 ## Description
 
 This plugin allows to search for text object in a document.  
