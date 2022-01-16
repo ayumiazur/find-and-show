@@ -7,6 +7,7 @@ Find and Show - Adobe XD Plugin
 Ver 0.0.2 - 1st Release
 Ver 0.0.3 - 2nd Release
 Ver 0.0.4 - 3rd Release
+Ver 0.0.5 - 4th Release
 
 ========================================================= */
 
@@ -172,9 +173,9 @@ function create(selection) {
         let abObj = artboard.at(i).children;
         for (let j = 0; j < abObj.length; j++) {
           if (abObj.at(j) instanceof Text) {
-            _chk_RegExp(artboard.at(i), abObj.at(j));
-          } else if ((abObj.at(j) instanceof SymbolInstance) || (abObj.at(j) instanceof Group)) {
-            grpToText(artboard.at(i), abObj.at(j).children);
+            _chk_RegExp2(abObj.at(j), artboard.at(i), abObj.at(j).guid);
+          } else {
+            nodeSearch(abObj.at(j), artboard.at(i), abObj.at(j).guid, abObj.at(j).name);
           }
         }
       }
@@ -198,77 +199,75 @@ function create(selection) {
 
       ================================================== */
 
-      function grpToText(artboard, group) {
-        for (let i = 0; i < group.length; i++) {
-          if (group.at(i) instanceof Text) {
-            _chk_RegExp(artboard, group.at(i), group.at(i).parent)
-          } else if ((group.at(i) instanceof SymbolInstance) || (group.at(i) instanceof Group)) {
-            for (let j = 0; j < group.at(i).children.length; j++) {
-              if (group.at(i).children.at(j) instanceof Text) {
-                _chk_RegExp(artboard, group.at(i).children.at(j), group.at(i).children.at(j).parent)
-              }
+      function nodeSearch(node, artboard, parentGuid, parentName) {
+        if ((node instanceof SymbolInstance) || (node instanceof Group)) {
+          for(let i = 0; i < node.children.length; i++){
+            let child = node.children.at(i);
+            if(child){
+              nodeSearch(child, artboard, parentGuid, parentName);
             }
+          }
+        } else {
+          if (node instanceof Text) {
+            _chk_RegExp2(node, artboard, node.guid, node.parent, parentGuid, parentName);
           }
         }
       }
 
-      function _chk_RegExp(artboard, obj, parent) {
+      function _chk_RegExp2(obj, artboard, guid, parent, parentGuid, parentName) {
         const gflags = op1Chk ? 'g' : '';
         const iflags = op2Chk ? 'i' : '';
         if (!regChk) {
           if (obj.text.toLowerCase().indexOf(sTxtValue.toLowerCase()) !== -1) {
-            _search(artboard, obj, parent);
+            _search2(obj, artboard, guid, parent, parentGuid, parentName);
           }
         } else {
-          const regexp = new RegExp(sTxtValue, gflags + iflags);
+          const regexp = new RegExp(sTxtValue, gflags + iflags);//Global Match, Ignore Case
           if (regexp.test(obj.text)) {
-            _search(artboard, obj, parent);
+            _search2(obj, artboard, guid, parent, parentGuid, parentName);
           }
         }
       }
 
-      function _search(artboard, obj, parent) {
+      function _search2(obj, artboard, guid, parent, parentGuid, parentName) {
         let x = obj.globalBounds.x;
         let y = obj.globalBounds.y;
         let localX = obj.boundsInParent.x;
         let localY = obj.boundsInParent.y;
         let w = obj.globalBounds.width;
         let h = obj.globalBounds.height;
-
         let li = document.createElement('li');
         ul.appendChild(li);
-
         let objKind;
         if (parent) {
           if (parent instanceof SymbolInstance) {
-            objKind = '<span class="obj obj--symbol">Component</span>';
+            objKind = '<span class="obj obj--symbol">Component: ' + parentName + '</span>';
           } else if (parent instanceof Group) {
-            objKind = '<span class="obj obj--group">Group</span>';
+            objKind = '<span class="obj obj--group">Group: ' + parentName + '</span>';
           }
         }
-
         if (obj.text.toUpperCase() == sTxtValue.toUpperCase()) {
           if (parent) {
-            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, obj.text, objKind);
+            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, obj.text, guid, parentGuid, objKind);
           } else {
-            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, obj.text);
+            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, obj.text, guid, parentGuid);
           }
         } else {
           let replaceTxt = obj.text.replace(new RegExp(sTxtValue, 'gi'), (match) => `<span class="highlight">${match}</span>`);
           if (parent) {
-            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, replaceTxt, objKind);
+            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, replaceTxt, guid, parentGuid, objKind);
           } else {
-            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, replaceTxt);
+            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, replaceTxt, guid, parentGuid);
           }
         }
       }
 
-      function list(x, y, lx, ly, w, h, artboard, text, label) {
+      function list(x, y, lx, ly, w, h, artboard, text, guid, parentGuid, label) {
         let output;
         if (label) {
-          output = '<a class="link" data-x="' + x + '" data-lx="' + lx + '" data-y="' + y + '" data-ly="' + ly + '" data-w="' + w + '" data-h="' + h + '"><span class="artboard">' + artboard + '</span>' + label + '<span class="text">' + text + '</span></a>';
+          output = '<a class="link" data-x="' + x + '" data-lx="' + lx + '" data-y="' + y + '" data-ly="' + ly + '" data-w="' + w + '" data-h="' + h + '" data-parentguid="' + parentGuid + '" data-guid="' + guid + '"><span class="artboard">' + artboard + '</span>' + label + '<span class="text">' + text + '</span></a>';
         } else {
-          output = '<a class="link" data-x="' + x + '" data-lx="' + lx + '" data-y="' + y + '" data-ly="' + ly + '" data-w="' + w + '" data-h="' + h + '"><span class="artboard">' + artboard + '</span><span class="text">' + text + '</span></a>';
+          output = '<a class="link" data-x="' + x + '" data-lx="' + lx + '" data-y="' + y + '" data-ly="' + ly + '" data-w="' + w + '" data-h="' + h + '" data-parentguid="' + guid + '" data-guid="' + guid + '"><span class="artboard">' + artboard + '</span><span class="text">' + text + '</span></a>';
         }
         return output;
       }
@@ -290,6 +289,21 @@ function create(selection) {
       let w = e.currentTarget.getAttribute('data-w');
       let h = e.currentTarget.getAttribute('data-h');
       viewport.scrollToCenter(Number(x), Number(y));
+
+      if (selection.items[0]) {
+        selection.items = null;
+      }
+
+      const artboard = root.children;
+      for (let i = 0; i < artboard.length; i++) {
+        let abObj = artboard.at(i).children;
+        for (let j = 0; j < abObj.length; j++) {
+          if (abObj.at(j).guid == e.currentTarget.getAttribute('data-parentguid')) {
+            selection.items = abObj.at(j);
+          }
+        }
+      }
+
     })
   }
 
@@ -324,14 +338,6 @@ function show(event) {
 
 
 function hide(event) {
-  let aNode = document.getElementById("result");
-  for (let i = aNode.childNodes.length - 1; i >= 0; i--) {
-    aNode.removeChild(aNode.childNodes[i]);
-  }
-
-  document.querySelector("#regexp").checked = false;
-  document.querySelector("#op1").checked = false;
-  document.querySelector("#op2").checked = false;
 }
 
 
