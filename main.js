@@ -8,6 +8,7 @@ Ver 0.0.2 - 1st Release
 Ver 0.0.3 - 2nd Release
 Ver 0.0.4 - 3rd Release
 Ver 0.0.5 - 4th Release
+Ver 0.0.6 - 5th Release
 
 ========================================================= */
 
@@ -34,6 +35,9 @@ function create(selection) {
             label.row input {
                 flex: 1 1 auto;
             }
+            button {
+              margin: 0 3px;
+            }
             h1 {
               font-size: 13px;
               margin: 10px 0;
@@ -41,6 +45,7 @@ function create(selection) {
             }
             .chk {
               vertical-align: middle;
+              width: 100%;
             }
             input[type=checkbox] {
               margin-right: 6px;
@@ -134,12 +139,9 @@ function create(selection) {
                 <label class="chk">
                   <input type="checkbox" id="op2">Ignore Case
                 </label>
-                <!--<label class="row">
-                    <span>↔︎</span>
-                    <input type="number" uxp-quiet="true" id="txtH" value="" placeholder="Width" />
-                </label>-->
             </div>
             <footer>
+              <button id="reset" uxp-variant="secondary">Reset</button>
               <button id="ok" type="submit" uxp-variant="cta">Search</button>
             </footer>
         </form>
@@ -170,12 +172,26 @@ function create(selection) {
 
       let artboard = root.children;
       for (let i = 0; i < artboard.length; i++) {
-        let abObj = artboard.at(i).children;
-        for (let j = 0; j < abObj.length; j++) {
-          if (abObj.at(j) instanceof Text) {
-            _chk_RegExp2(abObj.at(j), artboard.at(i), abObj.at(j).guid);
-          } else {
-            nodeSearch(abObj.at(j), artboard.at(i), abObj.at(j).guid, abObj.at(j).name);
+        if (artboard.at(i).children.length) {
+          let abObj = artboard.at(i).children;
+          for (let j = 0; j < abObj.length; j++) {
+            if (abObj.at(j) instanceof Text) {
+              if (abObj.at(j).parent instanceof Artboard) {
+                _chk_RegExp2(abObj.at(j), artboard.at(i), abObj.at(j).guid);
+              } else {
+                _chk_RegExp2(abObj.at(j), artboard.at(i).parent, abObj.at(j).guid, abObj.at(j).parent, abObj.at(j).parent.guid, abObj.at(j).parent.name);
+              }
+            } else {
+              if (abObj.at(j).parent instanceof Artboard) {
+                nodeSearch(abObj.at(j), artboard.at(i), abObj.at(j).guid, abObj.at(j).name);
+              } else {
+                nodeSearch(abObj.at(j), artboard.at(i).parent, abObj.at(j).parent.guid, artboard.at(i).name);
+              }
+            }
+          }
+        } else {
+          if (artboard.at(i) instanceof Text) {
+            _chk_RegExp2(artboard.at(i), artboard.at(i), artboard.at(i).guid);
           }
         }
       }
@@ -200,16 +216,14 @@ function create(selection) {
       ================================================== */
 
       function nodeSearch(node, artboard, parentGuid, parentName) {
-        if ((node instanceof SymbolInstance) || (node instanceof Group)) {
+        if (node instanceof Text) {
+          _chk_RegExp2(node, artboard, node.guid, node.parent, parentGuid, parentName);
+        } else {
           for(let i = 0; i < node.children.length; i++){
             let child = node.children.at(i);
             if(child){
               nodeSearch(child, artboard, parentGuid, parentName);
             }
-          }
-        } else {
-          if (node instanceof Text) {
-            _chk_RegExp2(node, artboard, node.guid, node.parent, parentGuid, parentName);
           }
         }
       }
@@ -248,16 +262,32 @@ function create(selection) {
         }
         if (obj.text.toUpperCase() == sTxtValue.toUpperCase()) {
           if (parent) {
-            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, obj.text, guid, parentGuid, objKind);
+            if (artboard instanceof Artboard) {
+              li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, obj.text, guid, parentGuid, objKind);
+            } else {
+              li.innerHTML = list(x, y, localX, localY, w, h, 'Pasteboard', obj.text, guid, parentGuid, objKind);
+            }
           } else {
-            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, obj.text, guid, parentGuid);
+            if (artboard instanceof Artboard) {
+              li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, obj.text, guid, parentGuid);
+            } else {
+              li.innerHTML = list(x, y, localX, localY, w, h, 'Pasteboard', obj.text, guid, parentGuid);
+            }
           }
         } else {
           let replaceTxt = obj.text.replace(new RegExp(sTxtValue, 'gi'), (match) => `<span class="highlight">${match}</span>`);
           if (parent) {
-            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, replaceTxt, guid, parentGuid, objKind);
+            if (artboard instanceof Artboard) {
+              li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, replaceTxt, guid, parentGuid, objKind);
+            } else {
+              li.innerHTML = list(x, y, localX, localY, w, h, 'Pasteboard', replaceTxt, guid, parentGuid, objKind);
+            }
           } else {
-            li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, replaceTxt, guid, parentGuid);
+            if (artboard instanceof Artboard) {
+              li.innerHTML = list(x, y, localX, localY, w, h, artboard.name, replaceTxt, guid, parentGuid);
+            } else {
+              li.innerHTML = list(x, y, localX, localY, w, h, 'Pasteboard', replaceTxt, guid, parentGuid);
+            }
           }
         }
       }
@@ -296,10 +326,22 @@ function create(selection) {
 
       const artboard = root.children;
       for (let i = 0; i < artboard.length; i++) {
-        let abObj = artboard.at(i).children;
-        for (let j = 0; j < abObj.length; j++) {
-          if (abObj.at(j).guid == e.currentTarget.getAttribute('data-parentguid')) {
-            selection.items = abObj.at(j);
+        if (artboard.at(i).children.length) {
+          let abObj = artboard.at(i).children;
+          for (let j = 0; j < abObj.length; j++) {
+            if (abObj.at(j).parent instanceof Artboard) {
+              if (abObj.at(j).guid == e.currentTarget.getAttribute('data-parentguid')) {
+                selection.items = abObj.at(j);
+              }
+            } else {
+              if (abObj.at(j).parent.guid == e.currentTarget.getAttribute('data-parentguid')) {
+                selection.items = abObj.at(j).parent;
+              }
+            }
+          }
+        } else {
+          if (artboard.at(i).guid == e.currentTarget.getAttribute('data-parentguid')) {
+            selection.items = artboard.at(i);
           }
         }
       }
@@ -310,10 +352,24 @@ function create(selection) {
   panel = document.createElement("div");
   panel.innerHTML = HTML;
   panel.querySelector("form").addEventListener("submit", searchText);
+  panel.querySelector("#reset").addEventListener("click", removeEl);
 
   return panel;
 }
 
+
+function removeEl(event) {
+  let aNode = document.getElementById("result");
+  for (let i = aNode.childNodes.length - 1; i >= 0; i--) {
+    aNode.removeChild(aNode.childNodes[i]);
+  }
+
+  document.querySelector("#txtV").value = '';
+  document.querySelector("#regexp").checked = false;
+  document.querySelector("#op1").checked = false;
+  document.querySelector("#op2").checked = false;
+
+}
 
 function show(event) {
   if (!panel) event.node.appendChild(create());

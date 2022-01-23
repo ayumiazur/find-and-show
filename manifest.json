@@ -1,7 +1,7 @@
 {
   "id" : "ef859283",
   "name" : "Find and Show",
-  "version" : "0.0.5",
+  "version" : "0.0.6",
   "host" : {
     "app" : "XD",
     "minVersion" : "21.0"
